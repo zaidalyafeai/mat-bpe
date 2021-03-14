@@ -9,10 +9,6 @@ from utils import *
 
 nltk.download('punkt')
 
-SOW = '<w>'
-EOW = '</w>'
-UNK = '<unk>'
-PAD = '<pad>'
 
 class bpe:
   def __init__(self, vocab_size = 100, verbose = True, morph = False, do_init_merge = False, prob = 0, lang = 'en'):
@@ -29,7 +25,7 @@ class bpe:
       self.name += '-morph'
       if lang == 'en':
         io = morfessor.MorfessorIO()
-        self.segmenter = io.read_binary_model_file('morfessor.bin')
+        self.segmenter = io.read_binary_model_file('/content/drive/MyDrive/DISS/morfessor.bin')
       elif lang == 'ar':
         self.segmenter = FarasaSegmenter() 
     self.name += f'-prob-{prob}'
