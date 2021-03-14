@@ -114,7 +114,7 @@ class bpe:
  
       if self.verbose:
         print(self.corpus)
-
+      print('the length of the vocab is ', self.vocab_size)
   def _encode_word(self, word):
     tokens = self._tokenize_word(word)
     return [self.vocab.index(token) for token in tokens]
