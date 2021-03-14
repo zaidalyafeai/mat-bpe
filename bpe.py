@@ -63,7 +63,6 @@ class bpe:
 
     self.corpus = process(t)
     self.vocab += [char for char in set(t.replace(' ', ''))]
-    self.vocab = self.vocab[:self.vocab_size]
 
     if self.morph:
       print('extracting affixes ...')
@@ -71,7 +70,6 @@ class bpe:
       # print(affixes)
       init_merges = generate_merges(affixes)
       self.vocab += [('').join(merge) for merge in init_merges]
-      self.vocab = self.vocab[:self.vocab_size]
       self.merges += init_merges
     
     if self.do_init_merge:
@@ -88,7 +86,8 @@ class bpe:
 
         self.vocab.append(('').join(best_pair))
         self.corpus = merge(self.corpus, best_pair)
-    
+
+    self.vocab = self.vocab[:self.vocab_size]
     while True:
       grams_count = get_pairs(self.corpus).most_common()
 
@@ -96,7 +95,7 @@ class bpe:
       if len(grams_count) == 0:
         print('no more bigrams to merge')
         break
-      if len(self.vocab) > self.vocab_size:
+      if len(self.vocab) >= self.vocab_size:
         print('vocab size reached')
         break
 
