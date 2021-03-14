@@ -33,7 +33,7 @@ parser = argparse.ArgumentParser(description='Args')
 parser.add_argument('--tok', type=int)
 parser.add_argument('--run', type=int)
 parser.add_argument('--vocab_size', type=int)
-parser.add_agument('--dir', type=str)
+parser.add_argument('--dir', type=str)
 parser.add_argument('--max_word_tokens', type=int)
 parser.add_argument('--max_char_tokens', type=int)
 
@@ -41,8 +41,7 @@ args = parser.parse_args()
 print(args)
 """## Setup input pipeline"""
 
-MAX_WORD_TOKENS = args.max_word_tokens
-MAX_CHAR_TOKENS = args.max_char_tokens
+MAX_TOKENS = args.max_word_tokens
 
 train_text = open('/content/train_data.txt', 'r').read().splitlines()
 train_lbls = [int(lbl) for lbl in open('/content/train_labels.txt', 'r').read().splitlines()]
@@ -246,7 +245,7 @@ else:
   )
 
   print(f'run: {j}')
-  loss = train(epochs = 20)
+  train(epochs = 20)
 
   # restore best model
   checkpoint.restore(ckpt_manager.latest_checkpoint)
