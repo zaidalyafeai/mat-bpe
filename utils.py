@@ -3,6 +3,11 @@ from collections import Counter
 import re
 import random 
 
+SOW = '<w>'
+EOW = '</w>'
+UNK = '<unk>'
+PAD = '<pad>'
+
 def generate_merges(affixes):
   merges = []
   for affix in affixes:
