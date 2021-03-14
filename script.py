@@ -54,7 +54,7 @@ assert len(train_text) == len(train_lbls)
 assert len(test_text) == len(test_text)
 
 def tokenize_data(tokenizer, vocab_size = 10000):
-  tokenizer.train(file = 'train_data.txt')
+  tokenizer.train(file = '/content/train_data.txt')
   
   train_data = tokenizer.encode(train_text, out_len=MAX_TOKENS)
   valid_data = tokenizer.encode(valid_text, out_len=MAX_TOKENS)
