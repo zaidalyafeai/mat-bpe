@@ -11,7 +11,7 @@ nltk.download('punkt')
 
 
 class bpe:
-  def __init__(self, vocab_size = 100, verbose = True, morph = False, do_init_merge = False, prob = 0, lang = 'en'):
+  def __init__(self, vocab_size = 100, verbose = False, morph = False, do_init_merge = False, prob = 0, lang = 'en'):
     self.do_init_merge = do_init_merge
     self.vocab = [PAD, UNK, SOW, EOW] 
     self.morph = morph     
@@ -67,7 +67,7 @@ class bpe:
     if self.morph:
       print('extracting affixes ...')
       affixes = self.extract_affixes(t)
-      print(affixes)
+      # print(affixes)
       init_merges = generate_merges(affixes)
       self.vocab += [('').join(merge) for merge in init_merges]
       self.merges += init_merges
