@@ -218,13 +218,8 @@ name = tokenizer.name
 if j != len(accs[name]):
   print('This is run already finished')
 else:
-  null_fd = os.open(os.devnull, os.O_RDWR)
-  stderr_fd = os.dup(2)
-  os.dup2(null_fd, 2)
-  ar_tokenizer, train_data, valid_data, test_data = tokenize_data(tokenizer, vocab_size = vocab_size)
-  # restore normal stderr
-  os.dup2(stderr_fd, 2)
-  os.close(null_fd)
+
+  tokenizer, train_data, valid_data, test_data = tokenize_data(tokenizer, vocab_size = vocab_size)
 
   train_dataset, valid_dataset, test_dataset = create_dataset(train_data, valid_data, test_data, batch_size = BATCH_SIZE)
 
