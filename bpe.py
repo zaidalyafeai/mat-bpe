@@ -63,7 +63,7 @@ class bpe:
   """
   Tokenizer main class
   """
-  def __init__(self, vocab_size = 100, verbose = False, morph = False, prob = 0, lang = 'ar', lower_case = True):
+  def __init__(self, vocab_size = 100, verbose = False, morph = False, prob = 0, lang = 'en', lower_case = True):
     self.vocab = [PAD, UNK, EOW] 
     self.morph = morph     
     self.merges = []
@@ -173,8 +173,13 @@ class bpe:
       print('extracting affixes ...')
       affixes = self.extract_affixes(t)
       init_merges = split_affixes(affixes)
-      self.vocab += [('').join(merge) for merge in init_merges]
-      self.merges += init_merges
+
+      for merge in init_merges:
+        if len(self.vocab) >= self.vocab_size:
+          break
+        self.vocab.append(('').join(merge))
+        self.merges.append(merge)
+      
       while True:
         pair_to_merge = None 
         pairs = get_pairs(self.corpus)
@@ -295,9 +300,9 @@ class bpe:
     """
     save merges using file name 
     """
-    with open(f'{path}/{self.name}', 'wb') as handle:
+    with open(f'{path}/tok.model', 'wb') as handle:
       pickle.dump([self.vocab, self.merges], handle, protocol=pickle.HIGHEST_PROTOCOL)
 
   def load(self, path):
-    with open(path, 'rb') as handle:
+    with open(f'{path}/tok.model', 'rb') as handle:
       self.vocab, self.merges = pickle.load(handle)
