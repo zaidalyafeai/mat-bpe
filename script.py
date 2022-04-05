@@ -54,8 +54,6 @@ assert len(train_text) == len(train_lbls)
 assert len(test_text) == len(test_text)
 
 def tokenize_data(tokenizer, vocab_size = 10000):
-  tokenizer.train(file = '/content/train_data.txt')
-  
   train_data = tokenizer.encode(train_text, out_len=MAX_TOKENS)
   valid_data = tokenizer.encode(valid_text, out_len=MAX_TOKENS)
   test_data = tokenizer.encode(test_text, out_len=MAX_TOKENS)
@@ -215,11 +213,23 @@ j = int(args.run)
 # start from the second tok. The first one has completed
 tokenizer = tokenizers[i]
 name = tokenizer.name
+import pickle
 if j != len(accs[name]):
   print('This is run already finished')
 else:
-
-  tokenizer, train_data, valid_data, test_data = tokenize_data(tokenizer, vocab_size = vocab_size)
+  tok_dir = f"{checkpoint_dir}/vocab_size_{vocab_size}/{name}"
+  if os.path.isfile(f"{tok_dir}/tok.model"):
+    print('loading pretrained tokenizer')
+    tokenizer.load(f"{tok_dir}")
+    with open(f'tok.data', 'rb') as handle:
+      train_data, valid_data, test_data = pickle.load(handle)
+  else:
+    print('training tokenizer from scratch')
+    tokenizer.train(file = '/content/train_data.txt')
+    tokenizer, train_data, valid_data, test_data = tokenize_data(tokenizer, vocab_size = vocab_size)
+    
+    with open(f'tok.data', 'wb') as handle:
+      pickle.dump([train_data, valid_data, test_data], handle, protocol=pickle.HIGHEST_PROTOCOL)
 
   train_dataset, valid_dataset, test_dataset = create_dataset(train_data, valid_data, test_data, batch_size = BATCH_SIZE)
 
@@ -241,7 +251,8 @@ else:
 
   print(f'run: {j}')
   train(epochs = 20)
-
+  if not os.path.isfile(f"{tok_dir}/tok.model"):
+    tokenizer.save(f"{tok_dir}")
   # restore best model
   checkpoint.restore(ckpt_manager.latest_checkpoint)
   _, test_score = evaluate_test(test_dataset)
