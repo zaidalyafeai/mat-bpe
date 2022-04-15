@@ -8,9 +8,10 @@ import pickle
 
 
 nltk.download('punkt')
-EOW = '</w>'
+SOW = '▁'
 UNK = '<unk>'
 PAD = '<pad>'
+SEP = '<sep>'
 
 def split_affixes(affixes):
   """
@@ -20,10 +21,9 @@ def split_affixes(affixes):
   merges = []
   for affix in affixes:
     dir = 'mid'
-    if EOW in affix:
-      dir = 'rtl'
-      affix = affix.replace(EOW, '')
-      chars = list(affix)+[EOW]
+    if SOW in affix:
+      affix = affix.replace(SOW, '')
+      chars = [SOW]+list(affix)
     else:
       chars = list(affix)
     curr_merge = []
@@ -55,8 +55,11 @@ def get_pairs(t):
   for bigram in bigrams:
     if bigram[0] == UNK:
       continue
-    if not bigram[0].endswith(EOW): # don't combine across words
+    if len(bigram[0]) * len(bigram[1]) == 0:
+      continue
+    if not bigram[-1].startswith(SOW): # don't combine across words
       grams[bigram] += 1
+  # grams = sorted(grams.items(), key=lambda item: (-item[1], item[0]))
   return grams
   
 class bpe:
@@ -64,7 +67,7 @@ class bpe:
   Tokenizer main class
   """
   def __init__(self, vocab_size = 100, verbose = False, morph = False, prob = 0, lang = 'en', lower_case = True):
-    self.vocab = [PAD, UNK, EOW] 
+    self.vocab = [PAD, UNK, SEP, SOW] 
     self.morph = morph     
     self.merges = []
     self.prob = prob
@@ -93,7 +96,7 @@ class bpe:
         if len(word) == 0:
           continue
         morphemes = self.segmenter.viterbi_segment(word)[0]
-        
+        # print(f'mor for {word} ', morphemes)
         if len(morphemes) == 1:
           continue
         
@@ -101,8 +104,8 @@ class bpe:
         for morpheme in morphemes:
           affix = morpheme
           if len(affix) < max_len:
-            if word.endswith(affix):
-              affix = affix+EOW
+            if word.startswith(affix):
+              affix = SOW+affix
             affixes.add(affix)
 
     if self.lang == 'ar':
@@ -120,8 +123,8 @@ class bpe:
         for morpheme in morphemes:
           affix = morpheme
           if len(affix) < max_len: #exclude the main stem from the list of affixes 
-            if word.endswith(affix):
-              affix = affix+EOW
+            if word.startswith(affix):
+              affix = SOW+affix
             affixes.add(affix)
 
     return affixes
@@ -147,9 +150,22 @@ class bpe:
     split text corpus into characters: 
     returns: split format hello => <w> h e l l o </w>
     """
+
+    t = t.replace("\n", "")
+
+    # sp doesn't split on characters like lock-up =/> lock up 
+    t = re.sub('([.,?;!])', ' ', t)
+
+    # not clear how to deal with such special characters like made-up, it seems in sentencepiece it removes the - but 
+    # it doesn't to be the same for for \'
+    # note that sentecepiece doesnt' seem to split on continued characters like he,then which is annoying.
+    t = re.sub('-', '', t)
+    t = re.sub('\'', '', t)
+    t = re.sub(' +', ' ', t)
+
     if self.lower_case:
       t = t.lower()
-    t = (' ').join([(' ').join(list(word))+f' {EOW}' for word in t.split(' ')])
+
     return t
 
   def train(self, text = None, file = None):
@@ -163,8 +179,11 @@ class bpe:
     else:
       raise("Must use corpus using plain text or a file")
 
-    self.corpus = self.preprocess(t)
     self.vocab += [char for char in set(t.replace(' ', ''))]
+    t = self.preprocess(t)
+    self.corpus = (' ').join([f'{SOW} '+(' ').join(list(word)) for word in t.split(' ') if len(t) > 0])
+
+    # print(self.vocab)
 
     if len(self.vocab) > self.vocab_size:
         raise Exception('Minimum vocab size is ', len(self.vocab))
@@ -173,7 +192,7 @@ class bpe:
       print('extracting affixes ...')
       affixes = self.extract_affixes(t)
       init_merges = split_affixes(affixes)
-
+      
       for merge in init_merges:
         if len(self.vocab) >= self.vocab_size:
           break
@@ -196,8 +215,15 @@ class bpe:
 
     step = 0 
     while True:
-      grams_count = get_pairs(self.corpus).most_common()
+      grams = get_pairs(self.corpus)
+      r = sorted(grams.items(), key=lambda item: (-item[1], item[0]))
+      r = [item for item in r if item[-1] == r[0][-1]]
+      r = sorted(r, key=lambda item: ('').join(item[0]))
+      grams_count = sorted(r, key=lambda item: len(('').join(item[0])))
 
+      # grams_count = sorted(grams.items(), key=lambda item: (-item[1], ('').join(item[0])))
+      if self.verbose:
+        print(grams_count)
       # stop conditions
       if len(grams_count) == 0:
         print('no more bigrams to merge')
@@ -278,11 +304,12 @@ class bpe:
     """
     tokenize a single word 
     """
-    t = self.preprocess(t)
-    t = (' ').join([char if char in self.vocab else UNK for char in t.split(' ')])
-    
+
+    t = SOW + ' ' + (' ').join([char if char in self.vocab else UNK for char in list(t)])
+
     while True:
-      pairs = get_pairs(t)
+      pairs = [pair for pair in get_pairs(t)]
+      # print(pairs)
       best_pair = None 
 
       for pair in self.merges:
