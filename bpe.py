@@ -259,7 +259,7 @@ class bpe:
     """
     encode a senteces
     """
-    output = [self._encode_word(word) for word in sentence.split(' ')] 
+    output = [self._encode_word(word) for word in sentence.split(' ') if len(word) > 0] 
     output = [item for sublist in output for item in sublist]
 
     
@@ -298,13 +298,12 @@ class bpe:
     """
     tokenize a sentence
     """
-    return [self._tokenize_word(word) for word in sentence.split(' ')]
+    return [self._tokenize_word(word) for word in sentence.split(' ') if len(word) > 0]
 
   def _tokenize_word(self, t):
     """
     tokenize a single word 
     """
-
     t = SOW + ' ' + (' ').join([char if char in self.vocab else UNK for char in list(t)])
 
     while True:
