@@ -189,7 +189,7 @@ BATCH_SIZE = 256
 vocab_size = int(args.vocab_size)
 
 checkpoint_dir = f'{args.dir}/ckpts/'
-tokenizers = [bpe(vocab_size, lang = 'ar'), bpe(vocab_size, lang = 'ar' morph = True)]
+tokenizers = [bpe(vocab_size, lang = 'ar'), bpe(vocab_size, lang = 'ar', morph = True)]
 
 #updated to add the vocab size as a directory
 accs_path = f"{checkpoint_dir}/vocab_size_{vocab_size}/accuracies.json"
